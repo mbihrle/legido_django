@@ -1,0 +1,10 @@
+services:
+    django:
+        container_name: legido_django
+        build:
+            context: ./legido
+        command: python manage.py runserver 0.0.0.0:8000
+        volumes:
+            - ./legido:/usr/src/app
+        ports:
+            - 8001:8000
