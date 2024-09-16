@@ -43,10 +43,10 @@ def home(request):
     # Subquery to get the date of the last quiz of the first icardsulary (card) in each stack
     last_quiz_subquery = Card.objects.filter(stack=OuterRef('pk')).order_by(
         '-last_quiz_timestamp').values('last_quiz_timestamp')[:1]
-   
+
     # Annotate stacks with the last quiz date and the count of cards
     stacks = stacks.annotate(last_quiz_date=Subquery(last_quiz_subquery), card_count=Count('cards')  # Count the number of cards in each stack
-    )
+                             )
 
     # # Annotate stacks with the last quiz date
     # stacks = stacks.annotate(last_quiz_date=Subquery(last_quiz_subquery))
@@ -392,18 +392,15 @@ class QuizView(LoginRequiredMixin, FormView):
         card = get_object_or_404(Card, id=card_id, stack=self.stack)
 
         # Determine the correct answer depending on quiz mode (normal or inverse)
-        correct_answer = card.front if self.request.session.get(
-            'inverse_quiz') else card.back
-        correct_answer_desc = card.front_desc if self.request.session.get(
-            'inverse_quiz') else card.back_desc
+        correct_answer = card.front if self.request.session.get('inverse_quiz') else card.back
+        correct_answer_desc = card.front_desc if self.request.session.get('inverse_quiz') else card.back_desc
 
         if correct_answer.lower() == answer.lower():
             self.request.session['result'] = 'Correct!'
-            self.request.session[f'correct_answers_{self.stack.id}'] = self.request.session.get(
-                f'correct_answers_{self.stack.id}', 0) + 1
+            self.request.session[f'correct_answers_{self.stack.id}'] = self.request.session.get(f'correct_answers_{self.stack.id}', 0) + 1
             card.correct_answers += 1
         else:
-            self.request.session['result'] = f"{correct_answer}"
+            self.request.session['result'] = 'Incorrect!'
             card.incorrect_answers += 1
 
         # Record the quiz result
@@ -413,10 +410,8 @@ class QuizView(LoginRequiredMixin, FormView):
 
         self.request.session['quiz_status'] = 'answer'
         self.request.session['user_input'] = answer
-        self.request.session['question'] = card.back if self.request.session.get(
-            'inverse_quiz') else card.front
-        self.request.session['question_desc'] = card.back_desc if self.request.session.get(
-            'inverse_quiz') else card.front_desc
+        self.request.session['question'] = card.back if self.request.session.get('inverse_quiz') else card.front
+        self.request.session['question_desc'] = card.back_desc if self.request.session.get('inverse_quiz') else card.front_desc
         self.request.session['solution'] = correct_answer
         self.request.session['solution_desc'] = correct_answer_desc
 
@@ -493,8 +488,7 @@ class TagListView(LoginRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        referer = self.request.META.get(
-            'HTTP_REFERER')  # Get the previous page URL
+        referer = self.request.META.get('HTTP_REFERER')  # Get the previous page URL
         context['previous_page'] = referer  # Add it to the context
         return context
 
@@ -524,4 +518,3 @@ class TagDeleteView(LoginRequiredMixin, DeleteView):
 
     def get_queryset(self):
         return Tag.objects.filter(user=self.request.user)
-

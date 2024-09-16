@@ -1,0 +1,22 @@
+# Ignore Python bytecode files
+__pycache__/
+*.pyc
+*.pyo
+
+# Ignore environment files and directories
+.venv/
+venv/
+
+
+# Ignore version control folders
+.git/
+.gitignore
+
+# Ignore media files, logs, and other unnecessary files
+media/
+logs/
+*.log
+
+# Ignore IDE and editor files
+.vscode/
+.idea/

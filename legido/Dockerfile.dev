@@ -11,6 +11,10 @@ ENV PYTHONUNBUFFERED 1
 RUN pip install --upgrade pip
 COPY ./requirements.txt /usr/src/app/requirements.txt
 RUN pip install -r requirements.txt
+RUN pip install dj-database-url
+
+# Copy the environment variables file (ensure this is done after installing requirements)
+COPY .prod.env /app/.dev.env
 
 # without this line perhaps the entrypoint.sh is not copied to the container
 # COPY ./entrypoint.sh /usr/src/app/entrypoint.sh

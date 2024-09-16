@@ -1,8 +1,9 @@
 services:
     django:
-        container_name: legido_django
+        container_name: legido_django_dev
         build:
             context: ./legido
+            dockerfile: Dockerfile.dev
         command: python manage.py runserver 0.0.0.0:8000
         volumes:
             - ./legido:/usr/src/app

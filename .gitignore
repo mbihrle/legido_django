@@ -3,3 +3,5 @@ db.sqlite
 .env
 .DS_Store
 __pycache__
+rsync_command.txt
+rsync-exclude.txt

@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 import os
 from pathlib import Path
+# Make sure this is installed (pip install dj-database-url)
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -51,7 +53,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'settings.urls'
+ROOT_URLCONF = 'legido.urls'
 
 TEMPLATES = [
     {
@@ -70,18 +72,39 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'settings.wsgi.application'
+WSGI_APPLICATION = 'legido.wsgi.application'
 
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
+
+# Detect the environment (use an environment variable)
+ENVIRONMENT = os.getenv('DJANGO_ENV', 'development')
+
+# Base settings (common to all environments)
+DATABASES = {}
+
+# Development (use SQLite)
+if ENVIRONMENT == 'development':
+    print('XXXXXXXXX devolpment')
+    DATABASES['default'] = {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     }
-}
+
+# Production (use PostgreSQL)
+else:
+    print('ZZZZZZZ production')
+    DATABASES['default'] = dj_database_url.config(
+        default=os.getenv('DATABASE_URL'))
+    print(DATABASES)
 
 
 # Password validation
@@ -120,10 +143,13 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
+# Set STATIC_ROOT to a directory where collected static files will be stored
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
 STATIC_URL = 'static/'
-STATICFILES_DIRS = [
-    # os.path.join(BASE_DIR, 'static'),
-]
+# STATICFILES_DIRS = [
+#     os.path.join(BASE_DIR, 'static'),
+# ]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
