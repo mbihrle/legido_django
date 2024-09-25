@@ -29,7 +29,7 @@ COPY .prod.env /app/.prod.env
 # Set PYTHONPATH environment variable
 ENV PYTHONPATH=/app/legido:$PYTHONPATH
 
-# # Give execute permissions to the entrypoint script
+# Give execute permissions to the entrypoint script
 RUN chmod +x /app/entrypoint.sh
 # Set the entrypoint script to run
 ENTRYPOINT ["/app/entrypoint.sh"]

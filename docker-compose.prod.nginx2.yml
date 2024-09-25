@@ -1,0 +1,72 @@
+services:
+    db:
+        image: postgres:15
+        ports:
+            - '5434:5432'
+        volumes:
+            - postgres_data:/var/lib/postgresql/data/
+        env_file:
+            - ./legido/.prod.env
+        networks:
+            - backend
+        healthcheck:
+            test: ['CMD-SHELL', 'pg_isready -U legido_user -d legido_db']
+            interval: 10s
+            timeout: 5s
+            retries: 5
+            start_period: 30s
+
+    web:
+        build:
+            context: ./legido
+            dockerfile: Dockerfile.prod
+        command: >
+            sh -c "python manage.py collectstatic --noinput &&
+                   python manage.py migrate &&
+                   gunicorn legido.wsgi:application --bind 0.0.0.0:8000"
+        volumes:
+            - static_volume:/app/static
+        ports:
+            - '8100:8000'
+        depends_on:
+            db:
+                condition: service_healthy
+        env_file:
+            - ./legido/.prod.env
+        networks:
+            - backend
+
+    nginx:
+        image: nginx:latest
+        ports:
+            - '80:80'
+            - '443:443'
+        volumes:
+            - static_volume:/app/static
+            - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+            - ./nginx/conf.d:/etc/nginx/conf.d
+            - ./nginx/certbot/conf:/etc/letsencrypt
+            - ./nginx/certbot/www:/var/www/certbot
+        depends_on:
+            - web
+        restart: always
+        env_file:
+            - ./legido/.prod.env
+        networks:
+            - backend
+
+    certbot:
+        image: certbot/certbot
+        volumes:
+            - ./nginx/certbot/conf:/etc/letsencrypt
+            - ./nginx/certbot/www:/var/www/certbot
+        entrypoint: "/bin/sh -c 'trap exit TERM; while :; do sleep 12h & wait $${!}; certbot renew; done'"
+        environment:
+            - CERTBOT_EMAIL=your-email@example.com # Use your registered email for Let's Encrypt
+
+volumes:
+    postgres_data:
+    static_volume:
+
+networks:
+    backend:

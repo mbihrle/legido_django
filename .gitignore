@@ -5,3 +5,4 @@ db.sqlite
 __pycache__
 rsync_command.txt
 rsync-exclude.txt
+commands.md

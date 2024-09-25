@@ -151,8 +151,9 @@ def create_stack(request):
         form = StackForm()
 
     # Fetch all existing tags to show in the form
-    tags = Tag.objects.all()
-
+    # tags = Tag.objects.all()
+    # Fetch only the tags that belong to the current user
+    tags = Tag.objects.filter(user=request.user)
     return render(request, 'icards/create_stack.html', {'form': form, 'tags': tags})
 
 
@@ -168,7 +169,8 @@ def edit_stack(request, stack_id):
             if tag_id:
                 tag = get_object_or_404(Tag, id=tag_id)
                 StackTag.objects.create(stack=stack, tag=tag)
-                messages.success(request, f'Tag "{tag.name}" added to the stack.')
+                messages.success(request, f'Tag "{
+                                 tag.name}" added to the stack.')
 
         elif 'new_tag' in request.POST:
             tag_form = TagForm(request.POST)
@@ -177,7 +179,8 @@ def edit_stack(request, stack_id):
                 new_tag.user = request.user
                 new_tag.save()
                 StackTag.objects.create(stack=stack, tag=new_tag)
-                messages.success(request, f'New tag "{new_tag.name}" created and added to the stack.')
+                messages.success(request, f'New tag "{
+                                 new_tag.name}" created and added to the stack.')
 
         elif 'save_changes' in request.POST:
             print('save_changes')
@@ -392,12 +395,15 @@ class QuizView(LoginRequiredMixin, FormView):
         card = get_object_or_404(Card, id=card_id, stack=self.stack)
 
         # Determine the correct answer depending on quiz mode (normal or inverse)
-        correct_answer = card.front if self.request.session.get('inverse_quiz') else card.back
-        correct_answer_desc = card.front_desc if self.request.session.get('inverse_quiz') else card.back_desc
+        correct_answer = card.front if self.request.session.get(
+            'inverse_quiz') else card.back
+        correct_answer_desc = card.front_desc if self.request.session.get(
+            'inverse_quiz') else card.back_desc
 
         if correct_answer.lower() == answer.lower():
             self.request.session['result'] = 'Correct!'
-            self.request.session[f'correct_answers_{self.stack.id}'] = self.request.session.get(f'correct_answers_{self.stack.id}', 0) + 1
+            self.request.session[f'correct_answers_{self.stack.id}'] = self.request.session.get(
+                f'correct_answers_{self.stack.id}', 0) + 1
             card.correct_answers += 1
         else:
             self.request.session['result'] = 'Incorrect!'
@@ -410,15 +416,18 @@ class QuizView(LoginRequiredMixin, FormView):
 
         self.request.session['quiz_status'] = 'answer'
         self.request.session['user_input'] = answer
-        self.request.session['question'] = card.back if self.request.session.get('inverse_quiz') else card.front
-        self.request.session['question_desc'] = card.back_desc if self.request.session.get('inverse_quiz') else card.front_desc
+        self.request.session['question'] = card.back if self.request.session.get(
+            'inverse_quiz') else card.front
+        self.request.session['question_desc'] = card.back_desc if self.request.session.get(
+            'inverse_quiz') else card.front_desc
         self.request.session['solution'] = correct_answer
         self.request.session['solution_desc'] = correct_answer_desc
 
         asked_card_ids = self.request.session.get(
             f'asked_card_ids_{self.stack.id}', [])
         asked_card_ids.append(card_id)
-        self.request.session[f'asked_card_ids_{self.stack.id}'] = asked_card_ids
+        self.request.session[f'asked_card_ids_{
+            self.stack.id}'] = asked_card_ids
 
         return self.render_to_response(self.get_context_data(form=form))
 
@@ -488,20 +497,52 @@ class TagListView(LoginRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        referer = self.request.META.get('HTTP_REFERER')  # Get the previous page URL
+        referer = self.request.META.get(
+            'HTTP_REFERER')  # Get the previous page URL
         context['previous_page'] = referer  # Add it to the context
         return context
 
 
+# class TagCreateView(LoginRequiredMixin, CreateView):
+#     model = Tag
+#     form_class = TagForm
+#     template_name = 'icards/tags.html'
+#     success_url = reverse_lazy('icards:tags')
+
+#     def form_valid(self, form):
+#         form.instance.user = self.request.user
+#         return super().form_valid(form)
+
 class TagCreateView(LoginRequiredMixin, CreateView):
     model = Tag
     form_class = TagForm
-    template_name = 'icards/edit_tag.html'
+    template_name = 'icards/tags.html'
     success_url = reverse_lazy('icards:tags')
 
     def form_valid(self, form):
+        print('view')
         form.instance.user = self.request.user
+        print(f"Checking for tag: {form.cleaned_data['name']} for user: {self.request.user}")
+        print(self.request.user)
+        print(form.cleaned_data['name'])
+
+        # Check if a tag with the same name already exists for the current user
+        if Tag.objects.filter(name=form.cleaned_data['name'], user=self.request.user).exists():
+            messages.error(
+                self.request, f"A tag with the name {form.cleaned_data['name']} already exists.")
+            return self.form_invalid(form)
+
+        # If the tag doesn't exist, save it and show a success message
+        messages.success(self.request, f"{form.cleaned_data['name']} created successfully!")
         return super().form_valid(form)
+
+    def form_invalid(self, form):
+        # If the form is invalid, fetch the existing tags to pass to the template
+        existing_tags = Tag.objects.filter(user=self.request.user)
+        
+        return self.render_to_response(self.get_context_data(form=form, tags=existing_tags))
+
+
 
 
 class TagUpdateView(LoginRequiredMixin, UpdateView):

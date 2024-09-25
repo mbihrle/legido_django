@@ -1,60 +1,58 @@
 services:
-    db:
-        image: postgres:15
-        ports:
-            - '5434:5432' # Exposes the database on port 5432
-        volumes:
-            - postgres_data:/var/lib/postgresql/data/
-        env_file:
-            - ./legido/.prod.env
-        # environment:
-        #     POSTGRES_DB: legido_db
-        #     POSTGRES_USER: legido_user
-        #     POSTGRES_PASSWORD: strongpassword
-        networks:
-            - backend
-        healthcheck:
-            test: ["CMD-SHELL", "pg_isready -U legido_user -d legido_db"]
-            interval: 10s
-            timeout: 5s
-            retries: 5
-            start_period: 30s
+  db:
+    image: postgres:15
+    ports:
+      - '5434:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    env_file:
+      - ./legido/.prod.env
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U legido_user -d legido_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
-    web:
-        build:
-            context: ./legido
-            dockerfile: Dockerfile.prod
-        # command: 
-        #     ./wait-for-db.sh
-        # volumes:
-        #     - .:/app
-        ports:
-            - '8100:8000'
-        depends_on:
-            db:
-                condition: service_healthy
-        env_file:
-            - ./legido/.prod.env
-        networks:
-            - backend
+  web:
+    build:
+      context: ./legido
+      dockerfile: Dockerfile.prod
+    command: >
+      sh -c "python manage.py collectstatic --noinput &&
+             python manage.py migrate &&
+             gunicorn legido.wsgi:application --bind 0.0.0.0:8000"
+    volumes:
+      - static_volume:/app/static
+    ports:
+      - '8100:8000'
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - ./legido/.prod.env
+    networks:
+      - backend
 
-    nginx:
-        image: nginx:latest
-        ports:
-            - '80:80'
-        volumes:
-            - ./nginx:/etc/nginx/conf.d
-            - static_volume:/app/static
-        depends_on:
-            - web
-        env_file:
-            - ./legido/.prod.env
-        networks:
-        - backend
+  caddy:
+    image: caddy:latest
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - static_volume:/usr/share/caddy
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - ./caddy/certificates:/data/caddy
+    depends_on:
+      - web
+    networks:
+      - backend
 
 volumes:
-    postgres_data:
-    static_volume:
+  postgres_data:
+  static_volume:
 
 networks:
   backend:

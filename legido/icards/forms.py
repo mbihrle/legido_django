@@ -26,6 +26,7 @@ class TagForm(forms.ModelForm):
             'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter tag name'}),
         }
 
+
 class AnswerForm(forms.Form):
     answer = forms.CharField(
         label='Your Answer',

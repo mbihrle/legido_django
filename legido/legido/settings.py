@@ -27,8 +27,18 @@ SECRET_KEY = 'django-insecure-z^=4*ulvf6j@za@+zj&jk7)qyl=o&=fb#8+x2d4@whul91dhf&
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = [
+    'www.legido.de',
+    'legido.de',
+    'localhost',  # For local development
+]
 
+CSRF_TRUSTED_ORIGINS = [
+    'https://www.legido.de',
+    'https://legido.de',
+    'http://localhost',  # For local development
+    'https://localhost',  # If you're using HTTPS locally
+]
 
 # Application definition
 
@@ -93,7 +103,7 @@ DATABASES = {}
 
 # Development (use SQLite)
 if ENVIRONMENT == 'development':
-    print('XXXXXXXXX devolpment')
+    print(' ### devolpment ###')
     DATABASES['default'] = {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
@@ -101,7 +111,7 @@ if ENVIRONMENT == 'development':
 
 # Production (use PostgreSQL)
 else:
-    print('ZZZZZZZ production')
+    print('### production ###')
     DATABASES['default'] = dj_database_url.config(
         default=os.getenv('DATABASE_URL'))
     print(DATABASES)

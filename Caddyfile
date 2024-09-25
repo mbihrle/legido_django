@@ -1,0 +1,18 @@
+legido.de, www.legido.de {
+    reverse_proxy web:8000
+
+    # Optional: Redirect HTTP traffic to HTTPS
+    @http {
+        protocol http
+    }
+    redir @http https://{host}{uri}
+
+    # Serve static files (if needed)
+    handle_path /static/* {
+        root * /app/static
+        file_server
+    }
+
+    # Handle Let's Encrypt automatically (Caddy will request certificates)
+    tls bihrle.marco@hotmail.com
+}

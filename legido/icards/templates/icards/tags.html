@@ -3,6 +3,7 @@
 {% block content %}
 
 
+
 <section class="container my3-5">
 
       <div class="container">       
@@ -14,20 +15,21 @@
         <a href="{{ previous_page }}" class="btn btn-secondary">&#060; Back</a>
     {% endif %}
     
-                <!-- Display Messages -->
-                {% if messages %}
-                    <div class="alert alert-info">
-                        {% for message in messages %}
-                            {{ message }}
-                        {% endfor %}
-                    </div>
-                {% endif %}
-
+{% if messages %}
+    <div>
+        {% for message in messages %}
+            <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-{{ message.tags }}{% endif %} mt-2">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
                 <!-- Add New Tag Form -->
                 <div class="card my-2 border-0 shadow-lg p-3 bg-body rounded">
                     <div class="card-body">
                         <h3 class="card-title">Add New Tag</h3>
                         <form method="post" action="{% url 'icards:add_tag' %}">
+                
                             {% csrf_token %}
                             <div class="form-group">
                                 <label for="id_name">Tag Name</label>
